@@ -1,0 +1,14 @@
+{
+    "hostname" : "qumulo_cluster.eng.qumulo.com",
+    "username" : "admin",
+    "password" : "admin",
+    "export_map" : { 
+                    "/home/mark" : [
+                        "workstations"
+                    ],
+                    "/scratch" : [
+                        "workstations",
+                        "servers"
+                    ] 
+    }
+}
