@@ -1,4 +1,4 @@
-# qumulo_netgroup_nfs
+# qumulo-nfs-netgroups
 Apply NIS Netgroup restrictions on Qumulo NFS Exports
 
 Assumptions:
