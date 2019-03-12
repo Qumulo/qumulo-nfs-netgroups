@@ -3,7 +3,7 @@
 import argparse
 import json
 import logging as log
-from pprint import pprint, pformat
+from pprint import pformat
 import re
 import socket
 import nis
@@ -36,11 +36,11 @@ def parse_net_group(netgroup):
         raise
     allhosts = []
     # Expecting input format of: "(red,,) (green,,) (blue,,)"
-    hosts=re.findall(r"\((\S+),\S*,\S*", raw_netgroup)
+    hosts = re.findall(r"\((\S+),\S*,\S*", raw_netgroup)
     # Expecting input format of "all servers workstations", strip any hosts
     stripped_groups = re.findall(r'([^(\)]+)(?:$|\()', raw_netgroup)
     # Expecting input format of "all servers workstations"
-    groups=re.findall(r"(\S+)\s", stripped_groups[0])
+    groups = re.findall(r"(\S+)\s", stripped_groups[0])
     allhosts = list(set().union(allhosts, hosts))
     for group in groups:
         # Recurse into specified groups, and merge the returned hosts
@@ -85,11 +85,11 @@ def main():
 
 
     if args.verbose == 1:
-        loglevel=log.INFO
+        loglevel = log.INFO
     elif args.verbose > 1:
-        loglevel=log.DEBUG
+        loglevel = log.DEBUG
     else:
-        loglevel=log.WARN
+        loglevel = log.WARN
 
     log.basicConfig(format="%(levelname)s: %(message)s", level=loglevel)
 
