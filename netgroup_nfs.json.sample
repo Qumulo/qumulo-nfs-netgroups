@@ -1,14 +1,15 @@
 {
-    "hostname" : "qumulo_cluster.eng.qumulo.com",
-    "username" : "admin",
-    "password" : "admin",
-    "export_map" : { 
-                    "/home/mark" : [
-                        "workstations"
-                    ],
-                    "/scratch" : [
-                        "workstations",
-                        "servers"
-                    ] 
-    }
+        "hostname": "qumulo_cluster.eng.qumulo.com",
+        "username": "admin",
+        "password": "admin",
+        "export_map": {
+                "/home/mark": {
+                        "hosts": ["mark-linux", "mark-mac"],
+                        "netgroups": ["workstations"]
+                },
+                "/scratch": {
+                        "hosts": [],
+                        "netgroups": ["workstations", "servers"]
+                }
+        }
 }

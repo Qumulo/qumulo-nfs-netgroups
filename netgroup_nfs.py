@@ -51,10 +51,12 @@ def enumerate_hosts(allowed_hosts):
     Returns an enumerated list of IPs from a netgroup
     """
     ips = []
-    for netgroup in allowed_hosts:
+    for netgroup in allowed_hosts['netgroups']:
         for hostname in parse_net_group(netgroup):
             # Merge and de-duplicate newly returned IPs
             ips = list(set().union(ips, get_ips(hostname)))
+    for host in allowed_hosts['hosts']:
+        ips = list(set().union(ips, get_ips(host)))
     return ips
 
 def parse_config(config_json):
