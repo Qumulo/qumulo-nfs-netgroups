@@ -2,7 +2,8 @@
 
 import argparse
 import json
-import pprint
+import logging as log
+from pprint import pprint, pformat
 import re
 import socket
 import nis
@@ -19,7 +20,7 @@ def get_ips(hostname):
         return data[2]
     except socket.gaierror as error:
         # ignore resolution failures
-        print "WARNING! {} failed to resolve: {}".format(hostname, error)
+        log.warning("{} failed to resolve: {}".format(hostname, error))
         return []
 
 def parse_net_group(netgroup):
@@ -29,9 +30,9 @@ def parse_net_group(netgroup):
     try:
         raw_netgroup = nis.cat('netgroup')[netgroup]
     except Exception as error:
-        print "FAILED to reteive netgroup map from NIS server: {}".format(
-            error)
-        print "Does 'ypcat netgroup' return a map?"
+        log.error("FAILED to reteive netgroup map from NIS server: {}".format(
+            error))
+        log.error("Does 'ypcat netgroup' return a map?")
         raise
     allhosts = []
     # Expecting input format of: "(red,,) (green,,) (blue,,)"
@@ -67,25 +68,40 @@ def parse_config(config_json):
         with open(config_json) as config_file:
             return json.load(config_file)
     except Exception as error:
-        print "FAILED to open {}: {}".format(config_json, error)
+        log.error("FAILED to open {}: {}".format(config_json, error))
         raise
 
 def main():
 
     parser = argparse.ArgumentParser(
         description='Add NFS export restrictions from netgroups to a cluster')
-    parser.add_argument('--config', default="netgroup_nfs.json")
+    parser.add_argument('--config', default='netgroup_nfs.json',
+                        help='Config json filename.')
+    parser.add_argument('--commit', action='store_true',
+                        help='Apply restrictions to cluster.')
+    parser.add_argument('--verbose', '-v', action='count',
+                        help='Increase verbosity of messages.')
     args = parser.parse_args()
+
+
+    if args.verbose == 1:
+        loglevel=log.INFO
+    elif args.verbose > 1:
+        loglevel=log.DEBUG
+    else:
+        loglevel=log.WARN
+
+    log.basicConfig(format="%(levelname)s: %(message)s", level=loglevel)
 
     options = parse_config(args.config)
 
     # Connect to Cluster Rest API
     restclient = qumulo.rest_client.RestClient(options['hostname'], 8000)
     try:
-        print "Logging into {hostname} as user {username}".format(**options)
+        log.info("Logging into {hostname} as user {username}".format(**options))
         restclient.login(options['username'], options['password'])
     except:
-        print "FAILED to login to cluster at {hostname}".format(**options)
+        log.error("FAILED to login to cluster at {hostname}".format(**options))
         raise
 
     export_map = options['export_map']
@@ -95,14 +111,14 @@ def main():
         try:
             export = restclient.nfs.nfs_get_export(export_path)
         except qumulo.lib.request.RequestError as error:
-            print "WARNING! Failure to retrieve export for {}: {}".format(
-                export_path, error)
+            log.warning("Failure to retrieve export for {}: {}".format(
+                export_path, error))
             continue
 
         # We don't appear to use more than one set of export restrictions, but
         # just in case...
         if len(export['restrictions']) > 1:
-            print("ERROR! This script cannot currently handle exports that "
+            log.error("This script cannot currently handle exports that "
                   "have more than one restriction list.")
             raise Exception
 
@@ -118,9 +134,16 @@ def main():
         export[u'id_'] = export.pop('id')
 
         # Apply our changes to this export
-        print "Updating export ({}):".format(export_path)
-        pprint.pprint(restclient.nfs.nfs_modify_export(**export))
-        print ""
+        if args.commit:
+            log.info("Updating export ({})".format(export_path))
+            update_result = restclient.nfs.nfs_modify_export(**export)
+            log.debug("{}\n".format(pformat(update_result)))
+        else:
+            log.debug("Unapplied export configuration ({})".format(export_path))
+            log.debug("{}\n".format(pformat(export)))
+
+    if not args.commit:
+        log.info("No configuration applied. Use --commit to apply changes.")
 
 if __name__ == '__main__':
     main()
