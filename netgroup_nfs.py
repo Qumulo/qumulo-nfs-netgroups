@@ -33,8 +33,18 @@ def parse_net_group(netgroup):
             error)
         print "Does 'ypcat netgroup' return a map?"
         raise
-    # Expecting a return of: "(red,,) (green,,) (blue,,)"
-    return re.findall(r"(\w+),\w*,\w*", raw_netgroup)
+    allhosts = []
+    # Expecting input format of: "(red,,) (green,,) (blue,,)"
+    hosts=re.findall(r"\((\S+),\S*,\S*", raw_netgroup)
+    # Expecting input format of "all servers workstations", strip any hosts
+    stripped_groups = re.findall(r'([^(\)]+)(?:$|\()', raw_netgroup)
+    # Expecting input format of "all servers workstations"
+    groups=re.findall(r"(\S+)\s", stripped_groups[0])
+    allhosts = list(set().union(allhosts, hosts))
+    for group in groups:
+        # Recurse into specified groups, and merge the returned hosts
+        allhosts = list(set().union(allhosts, parse_net_group(group)))
+    return allhosts
 
 def enumerate_hosts(allowed_hosts):
     """
