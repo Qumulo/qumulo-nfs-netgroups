@@ -27,8 +27,11 @@ def parse_net_group(netgroup):
     """
     Returns a list netgroup hosts
     """
+    raw_netgroup = ""
     try:
         raw_netgroup = nis.cat('netgroup')[netgroup]
+    except KeyError:
+        log.warn("No map named {} found in the netgroup file.".format(netgroup))
     except Exception as error:
         log.error("FAILED to reteive netgroup map from NIS server: {}".format(
             error))
