@@ -3,6 +3,7 @@
 import argparse
 import json
 import logging as log
+import os
 from pprint import pformat
 import re
 import socket
@@ -111,10 +112,10 @@ def main():
     # Connect to Cluster Rest API
     restclient = qumulo.rest_client.RestClient(cluster_host, 8000)
     try:
-        log.info("Logging into {hostname} as user {username}".format(**options))
+        log.info("Logging into {} as user {}".format(cluster_host, cluster_user))
         restclient.login(cluster_user, cluster_password)
     except:
-        log.error("FAILED to login to cluster at {hostname}".format(**options))
+        log.error("FAILED to login to cluster at {}".format(cluster_host))
         raise
 
     export_map = options['export_map']
