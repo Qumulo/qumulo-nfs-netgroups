@@ -99,11 +99,20 @@ def main():
 
     options = parse_config(args.config)
 
+    if 'hostname' and 'username' and 'password' in options.keys():
+        cluster_host = options['hostname']
+        cluster_user = options['username']
+        cluster_password = options['password']
+    else:
+        cluster_host = os.environ["CLUSTER_HOST"]
+        cluster_user = os.environ["CLUSTER_ADMIN"]
+        cluster_password = os.environ["CLUSTER_PASSWORD"]
+
     # Connect to Cluster Rest API
-    restclient = qumulo.rest_client.RestClient(options['hostname'], 8000)
+    restclient = qumulo.rest_client.RestClient(cluster_host, 8000)
     try:
         log.info("Logging into {hostname} as user {username}".format(**options))
-        restclient.login(options['username'], options['password'])
+        restclient.login(cluster_user, cluster_password)
     except:
         log.error("FAILED to login to cluster at {hostname}".format(**options))
         raise
