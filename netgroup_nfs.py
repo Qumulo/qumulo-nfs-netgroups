@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import argparse
 import json
@@ -89,9 +89,9 @@ def main():
     args = parser.parse_args()
 
 
-    if args.verbose == 1:
+    if not args.verbose:
         loglevel = log.INFO
-    elif args.verbose > 1:
+    elif args.verbose == 1:
         loglevel = log.DEBUG
     else:
         loglevel = log.WARN
