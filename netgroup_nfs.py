@@ -4,6 +4,7 @@ import argparse
 import json
 import logging as log
 import os
+import sys
 from pprint import pformat
 import re
 import socket
@@ -34,7 +35,7 @@ def parse_net_group(netgroup):
     except KeyError:
         log.warn("No map named {} found in the netgroup file.".format(netgroup))
     except Exception as error:
-        log.error("FAILED to reteive netgroup map from NIS server: {}".format(
+        log.error("FAILED to retrieve netgroup map from NIS server: {}".format(
             error))
         log.error("Does 'ypcat netgroup' return a map?")
         raise
@@ -76,8 +77,7 @@ def parse_config(config_json):
         log.error("FAILED to open {}: {}".format(config_json, error))
         raise
 
-def main():
-
+def main(args):
     parser = argparse.ArgumentParser(
         description='Add NFS export restrictions from netgroups to a cluster')
     parser.add_argument('--config', default='netgroup_nfs.json',
@@ -86,7 +86,7 @@ def main():
                         help='Apply restrictions to cluster.')
     parser.add_argument('--verbose', '-v', action='count',
                         help='Increase verbosity of messages.')
-    args = parser.parse_args()
+    args = parser.parse_args(args)
 
 
     if not args.verbose:
@@ -160,4 +160,4 @@ def main():
         log.info("No configuration applied. Use --commit to apply changes.")
 
 if __name__ == '__main__':
-    main()
+    main(sys.argv[1:])
