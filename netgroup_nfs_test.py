@@ -7,10 +7,10 @@ from netgroup_nfs import *
 
 class NetgroupNFSTest(unittest.TestCase):
 
-    def test_get_ips_localhost(self):
-        with patch('socket.gethostbyname_ex') as socket_mock:
-            socket_mock.return_value = ('localhost', [], ['127.0.0.1'])
-            ips = get_ips('localhost')
+    @patch('socket.gethostbyname_ex')
+    def test_get_ips_localhost(self, socket_mock):
+        socket_mock.return_value = ('localhost', [], ['127.0.0.1'])
+        ips = get_ips('localhost')
         self.assertEqual(ips,['127.0.0.1'])
 
     def test_get_ips_bad_hostname(self):
@@ -42,21 +42,22 @@ class NetgroupNFSTest(unittest.TestCase):
         with self.assertRaisesRegex(Exception, 'error error!'):
             parse_net_group('missing_map')
 
-    def test_enumerate_hosts(self):
-        with patch('netgroup_nfs.parse_net_group') as parse_net_group_mock, patch('netgroup_nfs.get_ips') as get_ips_mock:
-            def get_ips(hostname):
-                if hostname == 'linux-1':
-                    return ['1.2.3.4']
-                else:
-                    return ['1.2.3.4', '9.8.7.6']
-            get_ips_mock.side_effect = get_ips
+    @patch('netgroup_nfs.get_ips')
+    @patch('netgroup_nfs.parse_net_group')
+    def test_enumerate_hosts(self, parse_net_group_mock, get_ips_mock):
+        def get_ips(hostname):
+            if hostname == 'linux-1':
+                return ['1.2.3.4']
+            else:
+                return ['1.2.3.4', '9.8.7.6']
+        get_ips_mock.side_effect = get_ips
 
-            allowed_hosts = { 'hosts': ['linux-1', 'linux-2'], 'netgroups': ['workstation'] }
-            ips = enumerate_hosts(allowed_hosts)
+        allowed_hosts = { 'hosts': ['linux-1', 'linux-2'], 'netgroups': ['workstation'] }
+        ips = enumerate_hosts(allowed_hosts)
 
         self.assertEqual(set(ips), set(['1.2.3.4', '9.8.7.6']))
 
-    def test_parse_config(self):
+    def test_sample_parse_config(self):
         config = parse_config('netgroup_nfs.json.sample')
         self.assertEqual(config['username'], 'admin')
 
@@ -80,10 +81,12 @@ class NetgroupNFSTest(unittest.TestCase):
 
         return rest_client_mock
 
-    def test_main_no_commit(self):
-        with patch('qumulo.rest_client.RestClient') as rest_mock, patch('nis.cat') as nis_mock, patch('socket.gethostbyname_ex') as socket_mock:
-            rest_client_mock = self.setup_mocks(rest_mock, nis_mock, socket_mock)
-            main(['--config', 'netgroup_nfs.json.sample'])
+    @patch('socket.gethostbyname_ex')
+    @patch('nis.cat')
+    @patch('qumulo.rest_client.RestClient')
+    def test_main_no_commit(self, rest_mock, nis_mock, socket_mock):
+        rest_client_mock = self.setup_mocks(rest_mock, nis_mock, socket_mock)
+        main(['--config', 'netgroup_nfs.json.sample'])
 
         self.assertEqual(rest_mock.call_args[0][0], 'qumulo_cluster.eng.qumulo.com')
         self.assertEqual(rest_mock.call_args[0][1], 8000)
@@ -91,10 +94,12 @@ class NetgroupNFSTest(unittest.TestCase):
             len(rest_client_mock.nfs.nfs_modify_export.call_args_list), 0
         )
 
-    def test_main_commit(self):
-        with patch('qumulo.rest_client.RestClient') as rest_mock, patch('nis.cat') as nis_mock, patch('socket.gethostbyname_ex') as socket_mock:
-            rest_client_mock = self.setup_mocks(rest_mock, nis_mock, socket_mock)
-            main(['--config', 'netgroup_nfs.json.sample', '--commit'])
+    @patch('socket.gethostbyname_ex')
+    @patch('nis.cat')
+    @patch('qumulo.rest_client.RestClient')
+    def test_main_commit(self, rest_mock, nis_mock, socket_mock):
+        rest_client_mock = self.setup_mocks(rest_mock, nis_mock, socket_mock)
+        main(['--config', 'netgroup_nfs.json.sample', '--commit'])
 
         self.assertEqual(rest_mock.call_args[0][0], 'qumulo_cluster.eng.qumulo.com')
         self.assertEqual(rest_mock.call_args[0][1], 8000)
