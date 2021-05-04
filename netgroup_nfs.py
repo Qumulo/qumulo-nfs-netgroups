@@ -35,7 +35,7 @@ def parse_net_group(netgroup):
     except KeyError:
         log.warn("No map named {} found in the netgroup file.".format(netgroup))
     except Exception as error:
-        log.error("FAILED to reteive netgroup map from NIS server: {}".format(
+        log.error("FAILED to retrieve netgroup map from NIS server: {}".format(
             error))
         log.error("Does 'ypcat netgroup' return a map?")
         raise
